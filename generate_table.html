@@ -1,16 +1,21 @@
 <!-- Old code that was generating the tables for each room when the page loaded. Now to be used as a generator each new semester. -->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="index.css">
     <title>Laurier Room Availability</title>
 </head>
+
 <body>
     <div id="filter-status">Viewing: All Rooms</div>
     <button id="filter-currently-empty">Currently Empty Rooms</button>
     <button id="filter-empty-rest-day">Empty for Rest of the Day</button>
+    <label for="custom-time">Enter Custom Time:</label>
+    <input type="time" id="custom-time" name="custom-time">
+    <button id="apply-custom-time">Apply Custom Time</button>
     <div id="all-rooms-container" class="room-container"></div>
     <div id="currently-empty-rooms" class="room-container"></div>
     <div id="empty-rooms" class="room-container"></div>
@@ -18,7 +23,7 @@
     <a href="https://github.com/aiden10/rooms" target="_blank">Source Code</a>
     <script>
         var roomData;
-        const dayDict = {0: "M", 1: "T", 2: "W", 3: "R", 4: "F"};
+        const dayDict = { 0: "M", 1: "T", 2: "W", 3: "R", 4: "F" };
         const roomContainer = document.getElementById('all-rooms-container');
         const currentlyEmptyDiv = document.getElementById('currently-empty-rooms');
         const emptyForRestDiv = document.getElementById('empty-rooms');
@@ -26,38 +31,51 @@
         const allRoomsDivs = [];
 
         // Add functions to buttons
-        document.getElementById('filter-currently-empty').addEventListener('click', function() {
+        document.getElementById('filter-currently-empty').addEventListener('click', function () {
             filterCurrentlyEmptyRooms();
         });
 
-        document.getElementById('filter-empty-rest-day').addEventListener('click', function() {
+        document.getElementById('filter-empty-rest-day').addEventListener('click', function () {
             filterEmptyForRestOfDayRooms();
         });
         function compare(a, b) {
             const nameA = a.querySelector('h2').innerText;
             const nameB = b.querySelector('h2').innerText;
-            if (nameA < nameB ){
+            if (nameA < nameB) {
                 return -1;
             }
-            if ( nameA > nameB ){
+            if (nameA > nameB) {
                 return 1;
             }
             return 0;
         }
+        document.getElementById('apply-custom-time').addEventListener('click', function () {
+            const customTimeInput = document.getElementById('custom-time').value;
+            if (customTimeInput) {
+                const [hours, minutes] = customTimeInput.split(':').map(Number);
+                const currentTime = new Date();
+                currentTime.setHours(hours, minutes, 0, 0);
 
-        function loadAllRooms(){
+                // Update the filtering functions to use the custom currentTime
+                filterCurrentlyEmptyRooms(currentTime);
+                filterEmptyForRestOfDayRooms(currentTime);
+            } else {
+                alert('Please enter a valid time.');
+            }
+        });
+
+        function loadAllRooms() {
             allRoomsDivs.sort(compare);
             allRoomsDivs.forEach(room => {
                 roomContainer.appendChild(room);
             });
         }
 
-        function filterCurrentlyEmptyRooms(){
+        function filterCurrentlyEmptyRooms(currentTime) {
             const currentDate = new Date();
-            const currentTime = new Date(currentDate.getTime());
             const currentlyEmptyRooms = [];
             var currentDay = currentTime.getDay();
-            if (currentDay === 0 || currentDay === 6){
+            if (currentDay === 0 || currentDay === 6) {
                 window.alert("Today is a weekend and all rooms should be available");
                 return;
             }
@@ -72,7 +90,7 @@
             roomContainer.style.display = "none";
             currentlyEmptyDiv.style.display = "block";
 
-            for (const roomDiv of roomContainer.children){
+            for (const roomDiv of roomContainer.children) {
                 var name = roomDiv.querySelector('h2').innerText;
                 var roomSchedule = roomData[name];
 
@@ -90,12 +108,12 @@
             currentlyEmptyRooms.sort(compare);
             currentlyEmptyRooms.forEach(room => {
                 const scheduleDiv = room.querySelector('.scheduleDiv');
-                room.querySelector('h2').addEventListener("click", function(){
+                room.querySelector('h2').addEventListener("click", function () {
                     var content = scheduleDiv;
-                    if (content.style.display === "none"){
+                    if (content.style.display === "none") {
                         content.style.display = "block";
                     }
-                    else{
+                    else {
                         content.style.display = "none";
                     }
                 });
@@ -103,13 +121,12 @@
                 currentlyEmptyDiv.appendChild(room);
             });
         }
-        
-        function filterEmptyForRestOfDayRooms(){
+
+        function filterEmptyForRestOfDayRooms(currentTime) {
             const currentDate = new Date();
-            const currentTime = new Date(currentDate.getTime());
             const emptyForRestRooms = [];
             var currentDay = currentTime.getDay();
-            if (currentDay === 0 || currentDay === 6){
+            if (currentDay === 0 || currentDay === 6) {
                 window.alert("Today is a weekend and all rooms should be available");
                 return;
             }
@@ -119,7 +136,7 @@
                 roomContainer.style.display = "block";
                 return;
             }
-            
+
             filterStatus.innerText = "Viewing: Empty For Rest of Day Rooms";
             currentlyEmptyDiv.style.display = "none";
             emptyForRestDiv.style.display = "block";
@@ -127,7 +144,7 @@
             for (const roomDiv of roomContainer.children) {
                 const name = roomDiv.querySelector('h2').innerText;
                 const roomSchedule = roomData[name];
-                
+
                 let timeCopy = new Date(currentTime.getTime());
                 let roomValid = true;
 
@@ -154,12 +171,12 @@
             emptyForRestDiv.innerHTML = ''; // Clear previous filtered rooms
             emptyForRestRooms.forEach(room => {
                 const scheduleDiv = room.querySelector('.scheduleDiv');
-                room.querySelector('h2').addEventListener("click", function(){
+                room.querySelector('h2').addEventListener("click", function () {
                     var content = scheduleDiv;
-                    if (content.style.display === "none"){
+                    if (content.style.display === "none") {
                         content.style.display = "block";
                     }
-                    else{
+                    else {
                         content.style.display = "none";
                     }
                 });
@@ -167,17 +184,17 @@
                 emptyForRestDiv.appendChild(room);
             });
         }
-        
+
         function isValidTime(schedule, hour, minute, cellDay, suffix, fromButton) {
             // Get the room's schedule for the current day
             let classHours = schedule[cellDay];
             if (!classHours) return true;  // If no classes, the room is empty.
 
-            if (!fromButton){
+            if (!fromButton) {
                 // Adjust hour for AM/PM
                 if (suffix === "PM" && hour !== 12) {
                     hour += 12;
-                } 
+                }
                 else if (suffix === "AM" && hour === 12) {
                     hour = 0;
                 }
@@ -210,8 +227,8 @@
             .then(response => response.json())
             .then(data => {
                 roomData = data.Rooms;
-                for (const room of Object.entries(roomData)){ 
-                    
+                for (const room of Object.entries(roomData)) {
+
                     // initialize elements and properties
                     const roomDiv = document.createElement('div');
                     const scheduleDiv = document.createElement('div');
@@ -220,7 +237,7 @@
                     const timeTable = document.createElement('table');
                     roomDiv.className = "roomDiv";
                     scheduleDiv.className = "scheduleDiv";
-                    
+
                     // Create time table headers
                     const mondayHeader = document.createElement('th')
                     const tuesdayHeader = document.createElement('th')
@@ -251,11 +268,11 @@
                     for (var i = 0; i < 144; i++) {
                         let row = document.createElement('tr');
                         let timeCell = document.createElement('td');
-                        let formattedHour = hour === 0 ? 12 : hour;  
+                        let formattedHour = hour === 0 ? 12 : hour;
                         let formattedMinutes = minutes < 10 ? "0" + minutes : minutes;  // Add leading zero for single digits
                         timeCell.innerText = `${formattedHour}:${formattedMinutes} ${suffix}`;
                         row.appendChild(timeCell);
-                        
+
                         // Populate rows
                         for (let j = 0; j < 5; j++) {
                             let emptyCell = document.createElement('td');
@@ -264,9 +281,9 @@
                             valid ? emptyCell.style.backgroundColor = "green" : emptyCell.style.backgroundColor = "red";
                             row.appendChild(emptyCell);
                         }
-                        
+
                         timeTable.appendChild(row);
-                        
+
                         // Time logic
                         minutes += 10;
                         if (minutes === 60) {
@@ -275,19 +292,19 @@
                         }
                         if (hour === 12 && suffix === "AM" && i > 40) {
                             suffix = "PM";
-                        } 
-                        else if (hour === 13) {
-                            hour = 1;  
                         }
-                    }                    
-                    
+                        else if (hour === 13) {
+                            hour = 1;
+                        }
+                    }
+
                     // Make room divs collapsible
-                    roomName.addEventListener("click", function(){
+                    roomName.addEventListener("click", function () {
                         var content = scheduleDiv;
-                        if (content.style.display === "none"){
+                        if (content.style.display === "none") {
                             content.style.display = "block";
                         }
-                        else{
+                        else {
                             content.style.display = "none";
                         }
                     });
@@ -304,4 +321,5 @@
             });
     </script>
 </body>
+
 </html>
